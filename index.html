@@ -1,0 +1,1467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe Generator</title>
+    <meta name="description" content="Generate recipes from your ingredients or dish ideas. Filter by diet, cuisine, time, and servings.">
+    <meta property="og:title" content="Recipe Generator" />
+    <meta property="og:description" content="Type ingredients or a dish, get a recipe with filters for diet, cuisine, time and servings." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://dummyimage.com/1200x630/0f1222/f2f5ff&text=Recipe+Generator" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Recipe Generator" />
+    <meta name="twitter:description" content="Type ingredients or a dish, get a recipe instantly." />
+    <meta name="twitter:image" content="https://dummyimage.com/1200x630/0f1222/f2f5ff&text=Recipe+Generator" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* New foodie palette: warm amber + soft coral on midnight */
+      --bg: #0f1222;            /* midnight */
+      --panel: #11172b;         /* deep indigo */
+      --muted: #9aa4c7;         /* muted slate */
+      --text: #f2f5ff;          /* off-white */
+      --accent: #f59e0b;        /* amber */
+      --accent-strong: #fb923c; /* orange */
+      --danger: #ff7b7b;        /* soft tomato */
+      --card: #0c1224;          /* navy */
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 14px;
+      --gold: #facc15;          /* garnish */
+      --orange: #fb923c;        /* roasted */
+    }
+
+    * { box-sizing: border-box; }
+    html, body, #root { height: 100%; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 20% 0%, #0e1330 0%, #0f1222 60%, #0f1222 100%);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 840px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(18,24,51,0.9), rgba(15,21,43,0.9));
+      border: 1px solid rgba(124,156,255,0.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      backdrop-filter: blur(6px);
+      position: relative;
+      animation: fadeInUp 520ms ease both;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: radial-gradient(100px 60px at 30% 20%, var(--accent) 0%, var(--accent-strong) 40%, #2b1a0f 100%);
+      box-shadow: 0 6px 18px rgba(245,158,11,0.45);
+    }
+
+    h1 {
+      font-size: 20px;
+      line-height: 1.1;
+      margin: 0;
+      letter-spacing: 0.2px;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 4px 0 0 0;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    @media (max-width: 640px) {
+      form { grid-template-columns: 1fr; }
+      .button { width: 100%; }
+    }
+
+    .vis-label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 12px 0 4px 2px;
+    }
+
+    .input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(124,156,255,0.25);
+      color: var(--text);
+      padding: 14px 16px;
+      border-radius: 12px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      width: 100%;
+    }
+    .input::placeholder { color: #b8c0e9; opacity: 0.7; }
+    @media (prefers-color-scheme: dark) { .input::placeholder { color: #d3daf7; opacity: 0.9; } }
+    body { font-size: 16px; }
+    .card-body, .help { font-size: 15px; }
+    .input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(124,156,255,0.18);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .button {
+      background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
+      color: white;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 18px;
+      min-width: 150px;
+      cursor: pointer;
+      transition: transform 0.04s ease, filter 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 20px rgba(245,158,11,0.35);
+    }
+    .button:hover { filter: brightness(1.05); }
+    .button:active { transform: translateY(1px); }
+    .button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      filter: grayscale(0.1);
+    }
+
+    .help {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .result {
+      margin-top: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(124,156,255,0.18);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .error {
+      color: #ffd2d2;
+      background: rgba(255,107,107,0.08);
+      border: 1px solid rgba(255,107,107,0.35);
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .skeleton {
+      border-radius: 10px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.06) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.2s infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    /* --- Pro UI Enhancements --- */
+    .bg-orbs {
+      position: fixed;
+      inset: -20% -20% -20% -20%;
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(30px) saturate(1.2);
+      opacity: 0.7;
+    }
+    .bg-orbs .orb {
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(245,158,11,0.9), rgba(251,146,60,0.65), rgba(64,40,14,0.25) 70%);
+      animation: float 16s ease-in-out infinite;
+      mix-blend-mode: screen;
+    }
+    .bg-orbs .orb-1 { top: 5%; left: 5%; animation-delay: -2s; }
+    .bg-orbs .orb-2 { bottom: 0%; right: 10%; animation-delay: -6s; }
+    .bg-orbs .orb-3 { top: 40%; right: 40%; width: 520px; height: 520px; animation-delay: -10s; }
+    @keyframes float {
+      0% { transform: translate3d(0, 0, 0) scale(1); }
+      50% { transform: translate3d(-20px, 20px, 0) scale(1.05); }
+      100% { transform: translate3d(0, 0, 0) scale(1); }
+    }
+
+    .gradient-title {
+      background: linear-gradient(92deg, #ffffff 0%, #fde68a 50%, #fb923c 90%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: 0 0 0 rgba(0,0,0,0);
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, rgba(124,156,255,0) 0%, rgba(124,156,255,0.35) 50%, rgba(124,156,255,0) 100%);
+      margin: 12px 0 8px 0;
+    }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    .chip {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(124,156,255,0.25);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.08s ease, background 0.2s ease;
+      font-size: 12px;
+    }
+    .chip:hover { border-color: var(--accent); background: rgba(255,255,255,0.06); }
+    .chip:active { transform: translateY(1px); }
+
+    .progress {
+      position: relative;
+      height: 3px;
+      background: rgba(124,156,255,0.15);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 14px;
+    }
+    .progress .bar {
+      position: absolute; inset: 0 auto 0 0; height: 100%; width: 35%;
+      background: linear-gradient(90deg, rgba(245,158,11,0.0), var(--accent), var(--accent-strong));
+      border-radius: 999px;
+      animation: indeterminate 1.1s ease-in-out infinite;
+    }
+    /* Layout sections */
+    .section { margin-top: 20px; }
+    .section-title { font-weight: 700; letter-spacing: 0.2px; margin: 0 0 10px 0; }
+    .grid { display: grid; gap: 12px; }
+    @media (min-width: 720px) { .grid.cols-3 { grid-template-columns: repeat(3, 1fr); } }
+
+    .feature-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(74,222,128,0.2);
+      border-radius: 12px;
+      padding: 14px;
+      transition: transform 120ms ease, border-color 200ms ease, background 200ms ease;
+    }
+    .feature-card:hover { transform: translateY(-2px); border-color: var(--accent); background: rgba(255,255,255,0.06); }
+
+    .popular-card {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(251,146,60,0.25);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: transform 120ms ease, border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .popular-card:hover { transform: translateY(-2px); border-color: var(--accent); background: rgba(255,255,255,0.1); box-shadow: 0 6px 16px rgba(0,0,0,0.25); }
+    .popular-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+    .filters { display: grid; gap: 10px; margin-top: 10px; }
+    @media (min-width: 720px) { .filters { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .select, .number {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(124,156,255,0.25);
+      color: var(--text);
+      padding: 12px 12px;
+      border-radius: 12px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      width: 100%;
+      appearance: none;
+    }
+    .select:focus, .number:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(245,158,11,0.18); background: rgba(255,255,255,0.12); }
+    /* Custom dropdown */
+    .dropdown { position: relative; }
+    .dropdown-btn { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+    .dropdown-list {
+      position: absolute; z-index: 40; top: calc(100% + 6px); left: 0; right: 0;
+      background: #14182c; /* solid to avoid see-through */ border: 1px solid rgba(124,156,255,0.35);
+      border-radius: 12px; padding: 6px; max-height: 240px; overflow: auto; box-shadow: 0 10px 24px rgba(0,0,0,0.45);
+      pointer-events: auto; /* ensure it captures clicks */
+    }
+    .dropdown-scrim { position: fixed; inset: 0; background: rgba(15,18,34,0.35); z-index: 1000; }
+    .dropdown-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; }
+    .dropdown-item[aria-selected="true"], .dropdown-item:hover { background: rgba(255,255,255,0.08); }
+
+    .meta {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; color: #d9ffe7;
+    }
+    .badge {
+      background: rgba(74,222,128,0.12);
+      border: 1px solid rgba(74,222,128,0.35);
+      color: #caffd7;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    @keyframes indeterminate {
+      0% { left: -30%; width: 30%; }
+      50% { left: 30%; width: 40%; }
+      100% { left: 100%; width: 30%; }
+    }
+
+    .card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .card-title { font-weight: 600; letter-spacing: 0.2px; color: #eaf0ff; }
+    .card-body { white-space: pre-wrap; line-height: 1.6; }
+
+    .icon-btn {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(124,156,255,0.25);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.08s ease, border-color 0.2s ease, background 0.2s ease, filter 0.2s ease;
+    }
+    .icon-btn:hover { border-color: var(--accent); background: rgba(255,255,255,0.1); }
+    .icon-btn:active { transform: translateY(1px); }
+    .copied-badge { font-size: 12px; color: #b7ffcc; margin-left: 8px; opacity: 0.9; }
+
+    .appear { animation: fadeInUp 420ms ease both; }
+    @keyframes fadeInUp {
+      0% { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.996); }
+      100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+    }
+
+    /* Determinate progress and waiting text */
+    .progress-determinate { position: relative; height: 8px; background: rgba(255,255,255,0.12); border-radius: 999px; overflow: hidden; margin-top: 10px; }
+    .progress-determinate .bar { position: absolute; inset: 0 auto 0 0; height: 100%; width: 0%; background: linear-gradient(90deg, rgba(245,158,11,0.2), var(--accent), var(--accent-strong)); border-radius: 999px; }
+    .wait-text { font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+    .wait-text .dots { display: inline-flex; gap: 3px; }
+    .wait-text .dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: blink 1.2s infinite; opacity: 0.3; }
+    .wait-text .dot:nth-child(2) { animation-delay: .2s; }
+    .wait-text .dot:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-2px);} 100% { opacity: 0.3; transform: translateY(0);} }
+
+    /* Cute 2D baby chef animation */
+    .chef-anim { display: grid; place-items: center; margin-top: 12px; }
+    .chef-anim svg { width: 160px; height: 160px; filter: drop-shadow(0 8px 18px rgba(0,0,0,0.25)); }
+    .chef-stir { transform-origin: 120px 102px; animation: stir 1.2s ease-in-out infinite; }
+    @keyframes stir { 0% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } 100% { transform: rotate(-8deg); } }
+    .steam path { opacity: 0; animation: steamRise 2.2s ease-in-out infinite; }
+    .steam path:nth-child(2) { animation-delay: .5s; }
+    .steam path:nth-child(3) { animation-delay: 1s; }
+    @keyframes steamRise { 0% { opacity: 0; transform: translateY(6px); } 30% { opacity: .8; } 100% { opacity: 0; transform: translateY(-8px); } }
+    @media (prefers-reduced-motion: reduce) {
+      .chef-stir, .steam path, .appear, .skeleton, .progress .bar { animation: none !important; }
+    }
+
+    /* Pinterest-inspired gallery */
+    .gallery { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    @media (min-width: 720px) { .gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    .pin-tile {
+      position: relative;
+      display: block;
+      height: 180px;
+      background-size: cover;
+      background-position: center;
+      border-radius: 14px;
+      border: 1px solid rgba(124,156,255,0.2);
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+      transition: transform 140ms ease, box-shadow 200ms ease, border-color 200ms ease, filter 200ms ease;
+      cursor: pointer;
+      padding: 0;
+      background: none;
+    }
+    .pin-tile.tall { height: 180px; }
+    .pin-tile::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.0) 50%, rgba(0,0,0,0.45) 100%);
+    }
+    .pin-tile:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(0,0,0,0.35); border-color: var(--accent); filter: brightness(1.02); }
+    .pin-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .pin-label {
+      position: absolute; left: 10px; bottom: 10px;
+      background: rgba(15, 18, 34, 0.55);
+      border: 1px solid rgba(124,156,255,0.35);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      backdrop-filter: blur(4px);
+    }
+  </style>
+  <script>
+    // Global image fallback handler - defined early so <img onerror> can call it
+    (function(){
+      window.__fallbackImg = function(img){
+        try {
+          var list = [];
+          var primary = img.getAttribute('src') || '';
+          if (primary) list.push(primary);
+          var extras = (img.getAttribute('data-srcs') || '').split('|').filter(Boolean);
+          list = list.concat(extras);
+          var idx = parseInt(img.getAttribute('data-fallback-idx')||'0',10);
+          if (isNaN(idx)) idx = 0;
+          if (idx + 1 < list.length) {
+            img.setAttribute('data-fallback-idx', String(idx+1));
+            img.src = list[idx+1];
+          } else {
+            img.removeAttribute('onerror');
+          }
+        } catch(e) {}
+      };
+    })();
+  </script>
+</head>
+<body>
+  <div class="bg-orbs">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+  <div class="container">
+    <div class="panel">
+      <div class="header">
+        <div class="logo"></div>
+        <div>
+          <h1 class="gradient-title">Recipe Generator</h1>
+          <p class="sub">Type ingredients or a dish. Get a tasty plan.</p>
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div id="root"></div>
+
+      <!-- Additional site sections -->
+      <div class="section appear" id="filters-root"></div>
+
+      <div class="section appear">
+        <div class="section-title">Featured Inspiration</div>
+        <div class="gallery" id="featured-gallery">
+          <button class="pin-tile" type="button" data-recipe="grilled_salmon" aria-label="Open recipe Grilled Salmon">
+            <img class="pin-img" loading="lazy" decoding="async" src="https://source.unsplash.com/600x400/?grilled%20salmon,asparagus" alt="Grilled Salmon" referrerpolicy="no-referrer" data-srcs="https://source.unsplash.com/600x400/?salmon,asparagus|https://dummyimage.com/600x400/11172b/ffffff&text=Grilled+Salmon" onerror="__fallbackImg(this)" />
+            <span class="pin-label">Grilled Salmon</span>
+          </button>
+          <button class="pin-tile" type="button" data-recipe="chicken_caesar" aria-label="Open recipe Chicken Caesar Salad">
+            <img class="pin-img" loading="lazy" decoding="async" src="https://source.unsplash.com/600x400/?chicken%20caesar%20salad" alt="Chicken Caesar Salad" referrerpolicy="no-referrer" data-srcs="https://source.unsplash.com/600x400/?caesar%20salad|https://dummyimage.com/600x400/11172b/ffffff&text=Chicken+Caesar" onerror="__fallbackImg(this)" />
+            <span class="pin-label">Chicken Caesar</span>
+          </button>
+          <button class="pin-tile" type="button" data-recipe="turkey_chili" aria-label="Open recipe Turkey Chili">
+            <img class="pin-img" loading="lazy" decoding="async" src="https://source.unsplash.com/600x400/?turkey%20chili,bowl" alt="Turkey Chili" referrerpolicy="no-referrer" data-srcs="https://source.unsplash.com/600x400/?chili,bowl|https://dummyimage.com/600x400/11172b/ffffff&text=Turkey+Chili" onerror="__fallbackImg(this)" />
+            <span class="pin-label">Turkey Chili</span>
+          </button>
+          <button class="pin-tile" type="button" data-recipe="sheet_pan_chicken" aria-label="Open recipe Sheet Pan Chicken">
+            <img class="pin-img" loading="lazy" decoding="async" src="https://source.unsplash.com/600x400/?sheet%20pan%20chicken,roasted%20vegetables" alt="Sheet Pan Chicken" referrerpolicy="no-referrer" data-srcs="https://source.unsplash.com/600x400/?roasted%20chicken,vegetables|https://dummyimage.com/600x400/11172b/ffffff&text=Sheet+Pan+Chicken" onerror="__fallbackImg(this)" />
+            <span class="pin-label">Sheet Pan Chicken</span>
+          </button>
+          <button class="pin-tile" type="button" data-recipe="quinoa_salad" aria-label="Open recipe Quinoa Salad">
+            <img class="pin-img" loading="lazy" decoding="async" src="https://source.unsplash.com/600x400/?quinoa%20salad,mediterranean" alt="Quinoa Salad" referrerpolicy="no-referrer" data-srcs="https://source.unsplash.com/600x400/?quinoa%20bowl|https://dummyimage.com/600x400/11172b/ffffff&text=Quinoa+Salad" onerror="__fallbackImg(this)" />
+            <span class="pin-label">Quinoa Salad</span>
+          </button>
+          <button class="pin-tile" type="button" data-recipe="overnight_oats" aria-label="Open recipe Overnight Oats">
+            <img class="pin-img" loading="lazy" decoding="async" src="https://source.unsplash.com/600x400/?overnight%20oats,berries" alt="Overnight Oats" referrerpolicy="no-referrer" data-srcs="https://source.unsplash.com/600x400/?oats,berries|https://dummyimage.com/600x400/11172b/ffffff&text=Overnight+Oats" onerror="__fallbackImg(this)" />
+            <span class="pin-label">Overnight Oats</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="section appear">
+        <div class="section-title">Popular</div>
+        <div class="grid cols-3">
+          <button class="popular-card" type="button" data-popular="paneer tikka masala">Paneer Tikka Masala</button>
+          <button class="popular-card" type="button" data-popular="veg biryani">Veg Biryani</button>
+          <button class="popular-card" type="button" data-popular="chicken butter masala">Chicken Butter Masala</button>
+          <button class="popular-card" type="button" data-popular="pesto pasta">Pesto Pasta</button>
+          <button class="popular-card" type="button" data-popular="vegan chili">Vegan Chili</button>
+          <button class="popular-card" type="button" data-popular="gluten-free pancakes">Gluten-free Pancakes</button>
+        </div>
+      </div>
+
+      <div class="section appear">
+        <div class="section-title">Why use this?</div>
+        <div class="grid cols-3">
+          <div class="feature-card">
+            <div class="badge">Smart</div>
+            Turn leftover ingredients into complete meals.
+          </div>
+          <div class="feature-card">
+            <div class="badge" style="background: rgba(250,204,21,0.12); border-color: rgba(250,204,21,0.35); color: #fff7cc;">Fast</div>
+            Get step-by-step recipes in seconds.
+          </div>
+          <div class="feature-card">
+            <div class="badge" style="background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.35); color: #ffe2c9;">Tasty</div>
+            Chef-like ideas with simple instructions.
+          </div>
+        </div>
+      </div>
+
+      
+    </div>
+  </div>
+
+  <!-- React via CDN (production builds) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Keep Babel for JSX transpilation (can be removed if prebuilt) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // Direct webhook URL (no server). Note: If this is blocked by CORS,
+    // the app will gracefully fall back to sample recipes.
+    const WEBHOOK_URL = 'https://n8n.srv939170.hstgr.cloud/webhook-test/a9a0146c-c370-416a-b76f-73f5fc02c10d';
+    const SUGGESTIONS = [
+      'tomatoes, basil, mozzarella',
+      'chicken, rice, broccoli',
+      'vegan chili',
+      'butter chicken',
+      'gluten-free pancakes'
+    ];
+
+    // Built-in recipes for gallery tiles
+    const BUILT_IN_RECIPES = {
+      grilled_salmon: {
+        title: 'Grilled Salmon with Asparagus',
+        summary: 'Omega‑3 rich salmon with lemon-garlic asparagus',
+        meta: { time: '25 min', servings: 2 },
+        ingredients: [
+          '2 salmon fillets',
+          '1 bunch asparagus, trimmed',
+          '1 tbsp olive oil',
+          '1 lemon, wedges',
+          'Salt and pepper'
+        ],
+        steps: [
+          'Season salmon and asparagus with oil, salt, pepper.',
+          'Grill salmon 3–4 min/side; grill asparagus until tender.',
+          'Serve with lemon.'
+        ],
+        tags: ['high-protein','seafood']
+      },
+      chicken_caesar: {
+        title: 'Chicken Caesar Salad',
+        summary: 'Lean grilled chicken over crisp romaine with light Caesar',
+        meta: { time: '20 min', servings: 2 },
+        ingredients: [
+          '2 cups romaine, chopped',
+          '1 chicken breast, grilled and sliced',
+          '1/4 cup parmesan, shaved',
+          'Whole-grain croutons',
+          'Light caesar dressing'
+        ],
+        steps: [
+          'Toss romaine with dressing.',
+          'Top with chicken, parmesan, and croutons.'
+        ],
+        tags: ['salad','american']
+      },
+      turkey_chili: {
+        title: 'Turkey Chili',
+        summary: 'Hearty, lighter chili with beans and spices',
+        meta: { time: '35 min', servings: 4 },
+        ingredients: [
+          '450 g ground turkey',
+          '1 onion, diced',
+          '1 bell pepper, diced',
+          '1 can crushed tomatoes',
+          '1 can kidney beans',
+          '1 tbsp chili powder',
+          'Salt and pepper'
+        ],
+        steps: [
+          'Sauté onion and pepper; brown turkey.',
+          'Add tomatoes, beans, spices; simmer 20 min.'
+        ],
+        tags: ['one-pot','comfort']
+      },
+      sheet_pan_chicken: {
+        title: 'Sheet Pan Chicken & Veggies',
+        summary: 'Weeknight roasted chicken with mixed vegetables',
+        meta: { time: '30 min', servings: 3 },
+        ingredients: [
+          '500 g chicken thighs',
+          '2 cups mixed vegetables',
+          '2 tbsp olive oil',
+          '1 tsp Italian seasoning',
+          'Salt and pepper'
+        ],
+        steps: [
+          'Toss everything with oil and seasoning.',
+          'Roast at 220°C for 25–30 min until browned.'
+        ],
+        tags: ['sheet-pan','easy']
+      },
+      quinoa_salad: {
+        title: 'Mediterranean Quinoa Salad',
+        summary: 'Protein-packed quinoa with cucumbers, tomatoes, feta',
+        meta: { time: '20 min', servings: 3 },
+        ingredients: [
+          '2 cups cooked quinoa',
+          '1 cup cucumber, diced',
+          '1 cup cherry tomatoes, halved',
+          '1/3 cup feta, crumbled',
+          '2 tbsp olive oil',
+          '1 tbsp lemon juice',
+          'Salt and pepper'
+        ],
+        steps: [
+          'Combine quinoa and vegetables.',
+          'Dress with oil, lemon, salt, pepper; add feta.'
+        ],
+        tags: ['vegetarian','meal-prep']
+      },
+      overnight_oats: {
+        title: 'Overnight Oats with Berries',
+        summary: 'No-cook breakfast with fiber and antioxidants',
+        meta: { time: '5 min', servings: 2 },
+        ingredients: [
+          '1 cup rolled oats',
+          '1 cup milk or almond milk',
+          '1 tbsp chia seeds',
+          '1 tsp honey',
+          '1/2 cup mixed berries'
+        ],
+        steps: [
+          'Stir oats, milk, chia, honey in a jar; chill overnight.',
+          'Top with berries to serve.'
+        ],
+        tags: ['breakfast','no-cook']
+      }
+    };
+
+    function prettyPrintRecipe(maybeJson) {
+      try {
+        const obj = typeof maybeJson === 'string' ? JSON.parse(maybeJson) : maybeJson;
+        if (!obj || typeof obj !== 'object') return null;
+
+        // If an API wraps the recipe in output/recipes array, pick the first recipe
+        const container = obj.output?.recipes?.[0]
+          || obj.recipes?.[0]
+          || obj.output?.recipe
+          || null;
+
+        const base = container || obj;
+
+        // Normalize possible shapes
+        const title = base.title || base.name || base.recipe_title || 'Your Recipe';
+
+        let ingredients = base.ingredients || base.ingredient_list || base.items || base.recipe_ingredients || [];
+        // Support array of objects { qty, unit, item, notes }
+        if (Array.isArray(ingredients) && ingredients.length > 0 && typeof ingredients[0] === 'object') {
+          ingredients = ingredients.map(it => {
+            const parts = [];
+            if (it.qty !== undefined && it.qty !== null && it.qty !== '') parts.push(String(it.qty));
+            if (it.unit) parts.push(String(it.unit));
+            if (it.item) parts.push(String(it.item));
+            let line = parts.join(' ').trim();
+            if (it.notes) line += ` — ${it.notes}`;
+            return line;
+          });
+        }
+
+        let steps = base.steps || base.directions || base.method || base.instructions || base.recipe_steps || [];
+        if (Array.isArray(steps) && steps.length > 0 && typeof steps[0] === 'object') {
+          steps = steps.map(st => st.text || st.step || st.description || '');
+        }
+
+        const time = base.totalTime || base.time || base.total_time || base.ready_in || base.cook_time || null;
+        const servings = base.servings || base.yield || base.recipe_servings || null;
+        const summary = base.summary || base.description || '';
+        const difficulty = base.difficulty || '';
+        const kcal = base.kcal || base.calories || null;
+        const macros = base.macros || null; // { protein, carbs, fat }
+        const tags = base.tags || base.keywords || [];
+        const tips = base.tips || [];
+        const substitutions = base.substitutions || [];
+        const allergens = base.allergens || [];
+        const notice = obj.output?.notice || base.notice || '';
+
+        const meta = { time: time ? `${time} min` : null, servings };
+        // If ingredients or steps look like strings, convert to arrays intelligently
+        const normIngredients = Array.isArray(ingredients)
+          ? ingredients
+          : (typeof ingredients === 'string' ? ingredients.split(/\n|,|;/).map(s => s.trim()).filter(Boolean) : []);
+        const normSteps = Array.isArray(steps)
+          ? steps
+          : (typeof steps === 'string' ? steps.split(/\n|\d+\.|-/).map(s => s.trim()).filter(Boolean) : []);
+        // If both arrays end up empty, return null to let raw text render
+        if (normIngredients.length === 0 && normSteps.length === 0 && title === 'Your Recipe') return null;
+        return {
+          title,
+          ingredients: normIngredients,
+          steps: normSteps,
+          meta,
+          summary,
+          difficulty,
+          kcal,
+          macros,
+          tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? tags.split(',').map(t => t.trim()).filter(Boolean) : []),
+          tips: Array.isArray(tips) ? tips : [],
+          substitutions: Array.isArray(substitutions) ? substitutions : [],
+          allergens: Array.isArray(allergens) ? allergens : [],
+          notice
+        };
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // Progressive image fallback for gallery
+    function initGalleryImageFallbacks() {
+      const imgs = document.querySelectorAll('#featured-gallery .pin-img');
+      imgs.forEach((img) => {
+        if (img.dataset._wired) return;
+        img.dataset._wired = '1';
+        img.addEventListener('error', function onErr() {
+          try {
+            const list = (img.getAttribute('data-srcs') || '').split('|').filter(Boolean);
+            const current = img.getAttribute('src') || '';
+            const next = list.find((u) => u && u !== current);
+            if (next) {
+              img.setAttribute('src', next);
+            } else {
+              img.removeEventListener('error', onErr);
+            }
+          } catch {}
+        });
+      });
+    }
+
+    // Very simple unit conversion tokenizer (best-effort)
+    function convertUnits(line, unitSystem) {
+      if (unitSystem !== 'imperial') return line; // metric is default
+      // Replace common metric units to imperial approximations
+      // g -> oz, ml -> fl oz, kg -> lb, l -> qt
+      try {
+        return line
+          .replace(/(\b)([0-9]+(?:\.[0-9]+)?)\s?g\b/gi, (_, b, n) => `${b}${(parseFloat(n)*0.0353).toFixed(1)} oz`)
+          .replace(/(\b)([0-9]+(?:\.[0-9]+)?)\s?kg\b/gi, (_, b, n) => `${b}${(parseFloat(n)*2.2046).toFixed(2)} lb`)
+          .replace(/(\b)([0-9]+(?:\.[0-9]+)?)\s?ml\b/gi, (_, b, n) => `${b}${(parseFloat(n)*0.0338).toFixed(1)} fl oz`)
+          .replace(/(\b)([0-9]+(?:\.[0-9]+)?)\s?l\b/gi, (_, b, n) => `${b}${(parseFloat(n)*1.0567).toFixed(2)} qt`);
+      } catch { return line; }
+    }
+
+    function Dropdown({ label, value, onChange, options, id }) {
+      const [open, setOpen] = React.useState(false);
+      const btnRef = React.useRef(null);
+      const listRef = React.useRef(null);
+      const [menuPos, setMenuPos] = React.useState({ top: 0, left: 0, width: 0 });
+      useEffect(() => {
+        function onDoc(e) {
+          if (!listRef.current || !btnRef.current) return;
+          if (!listRef.current.contains(e.target) && !btnRef.current.contains(e.target)) setOpen(false);
+        }
+        document.addEventListener('click', onDoc);
+        return () => document.removeEventListener('click', onDoc);
+      }, []);
+      useEffect(() => {
+        function updatePos() {
+          if (!btnRef.current) return;
+          const r = btnRef.current.getBoundingClientRect();
+          setMenuPos({ top: Math.round(r.bottom + 6), left: Math.round(r.left), width: Math.round(r.width) });
+        }
+        if (open) {
+          updatePos();
+          window.addEventListener('scroll', updatePos, true);
+          window.addEventListener('resize', updatePos);
+          return () => {
+            window.removeEventListener('scroll', updatePos, true);
+            window.removeEventListener('resize', updatePos);
+          };
+        }
+      }, [open]);
+      function handleKey(e) {
+        if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); }
+        if (e.key === 'Escape') { setOpen(false); btnRef.current?.focus(); }
+      }
+      return (
+        <div className="dropdown">
+          <label htmlFor={id} className="vis-label">{label}</label>
+          <div
+            id={id}
+            className="select dropdown-btn"
+            role="button"
+            tabIndex={0}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+            onClick={() => setOpen(!open)}
+            onKeyDown={handleKey}
+            ref={btnRef}
+          >
+            <span>{value ? options.find(o => o.value === value)?.label : `Any ${label.toLowerCase()}`}</span>
+            <span>▾</span>
+          </div>
+          {open && ReactDOM.createPortal(
+            <div className="dropdown-scrim" onClick={() => setOpen(false)} />, document.body
+          )}
+          {open && ReactDOM.createPortal(
+            <div
+              className="dropdown-list"
+              role="listbox"
+              ref={listRef}
+              style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, width: menuPos.width, zIndex: 1001 }}
+            >
+              {options.map((opt) => (
+                <div
+                  key={opt.value}
+                  className="dropdown-item"
+                  role="option"
+                  aria-selected={value === opt.value}
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); onChange(opt.value); setOpen(false); btnRef.current?.focus(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onChange(opt.value); setOpen(false); btnRef.current?.focus(); } }}
+                >
+                  {opt.label}
+                </div>
+              ))}
+            </div>, document.body
+          )}
+        </div>
+      );
+    }
+
+    function Filters({ diet, setDiet, cuisine, setCuisine, time, setTime, servings, setServings, unit, setUnit, exclude, setExclude }) {
+      return (
+        <div className="section appear">
+          <div className="section-title">Quick Filters</div>
+          <div className="filters">
+            <Dropdown id="diet-dd" label="Diet" value={diet} onChange={setDiet} options={[
+              {value:'', label:'Any diet'}, {value:'vegetarian', label:'Vegetarian'}, {value:'vegan', label:'Vegan'}, {value:'keto', label:'Keto'}, {value:'paleo', label:'Paleo'}, {value:'gluten-free', label:'Gluten-free'}
+            ]} />
+            <Dropdown id="cuisine-dd" label="Cuisine" value={cuisine} onChange={setCuisine} options={[
+              {value:'', label:'Any cuisine'}, {value:'american', label:'American'}, {value:'indian', label:'Indian'}, {value:'italian', label:'Italian'}, {value:'mexican', label:'Mexican'}, {value:'chinese', label:'Chinese'}, {value:'thai', label:'Thai'}
+            ]} />
+            <Dropdown id="time-dd" label="Time (minutes)" value={time} onChange={setTime} options={[
+              {value:'', label:'Any time'}, {value:'15', label:'Under 15'}, {value:'30', label:'Under 30'}, {value:'45', label:'Under 45'}, {value:'60', label:'Under 60'}
+            ]} />
+            <label htmlFor="servings" className="vis-label">Servings</label>
+            <div style={{display:'flex', gap:8}}>
+              <button type="button" className="icon-btn" onClick={() => setServings((s) => String(Math.max(1, (parseInt(s||'1',10)||1) - 1)))} aria-label="Decrease servings" onKeyDown={(e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); e.currentTarget.click(); } }}>-</button>
+              <input id="servings" className="number" type="number" min="1" value={servings} onChange={(e) => setServings(e.target.value)} aria-label="Servings" style={{minWidth: 90}} />
+              <button type="button" className="icon-btn" onClick={() => setServings((s) => String((parseInt(s||'1',10)||1) + 1))} aria-label="Increase servings" onKeyDown={(e)=>{ if(e.key==='Enter' || e.key===' '){ e.preventDefault(); e.currentTarget.click(); } }}>+</button>
+            </div>
+            <Dropdown id="unit-dd" label="Units" value={unit} onChange={setUnit} options={[{value:'metric', label:'Metric (g, ml)'},{value:'imperial', label:'Imperial (oz, cups)'}]} />
+            <label htmlFor="exclude" className="vis-label">Exclude ingredients (comma-separated)</label>
+            <input id="exclude" className="number" type="text" placeholder="e.g. gluten, nuts" value={exclude} onChange={(e)=> setExclude(e.target.value)} aria-label="Exclude ingredients" />
+          </div>
+        </div>
+      );
+    }
+
+    function RecipeApp({ diet, setDiet, cuisine, setCuisine, time, setTime, servings, setServings, unit, exclude, setLastRecipe }) {
+      const [query, setQuery] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState('');
+      const [rawRecipe, setRawRecipe] = useState('');
+      const [prettyRecipe, setPrettyRecipe] = useState(null);
+      const [copied, setCopied] = useState(false);
+      const [recent, setRecent] = useState(() => {
+        try {
+          const r = JSON.parse(localStorage.getItem('recentQueries') || '[]');
+          return Array.isArray(r) ? r : [];
+        } catch { return []; }
+      });
+      const [progressPct, setProgressPct] = useState(0);
+      const progressRef = useRef(null);
+      const progressTimerRef = useRef(null);
+      const abortRef = useRef(null);
+
+      async function handleSubmit(e) {
+        e.preventDefault();
+        setError('');
+        setRawRecipe('');
+        setPrettyRecipe(null);
+        const trimmed = query.trim();
+        if (!trimmed) {
+          setError('Please enter some ingredients or a dish name.');
+          return;
+        }
+        setLoading(true);
+        setProgressPct(0);
+        startProgress();
+        try {
+          const controller = new AbortController();
+          abortRef.current = controller;
+          const res = await fetch(WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json, text/plain;q=0.9, */*;q=0.8'
+            },
+            mode: 'cors',
+            credentials: 'omit',
+            referrerPolicy: 'no-referrer',
+            redirect: 'follow',
+            body: JSON.stringify({ prompt: buildPrompt(trimmed) }),
+            signal: controller.signal
+          });
+
+          if (!res.ok) {
+            const text = await res.text();
+            throw new Error(`Request failed (${res.status}): ${text}`);
+          }
+
+          let content = '';
+          const contentType = res.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            const data = await res.json();
+            content = data.recipe || data.text || data.result || JSON.stringify(data, null, 2);
+          } else {
+            content = await res.text();
+          }
+
+          setRawRecipe(content);
+          try { console.log('Webhook response:', content); } catch {}
+          let structured = prettyPrintRecipe(content);
+          // Try parsing a nested field if top-level fails
+          if (!structured) {
+            try {
+              const asJson = JSON.parse(content);
+              const nested = asJson?.data || asJson?.result || asJson?.output || asJson?.recipe;
+              if (nested) structured = prettyPrintRecipe(nested);
+            } catch {}
+          }
+          setPrettyRecipe(structured);
+          try { setLastRecipe(structured); } catch {}
+
+          // Save recent
+          const next = [trimmed, ...recent.filter((q) => q !== trimmed)].slice(0, 6);
+          setRecent(next);
+          try { localStorage.setItem('recentQueries', JSON.stringify(next)); } catch {}
+        } catch (err) {
+          // Friendly fallback with sample recipes if upstream not reachable
+          const timedOut = err && err.name === 'AbortError';
+          setError(timedOut ? 'The generator is taking too long. Showing sample recipes.' : 'The generator is unavailable right now. Showing sample recipes.');
+          const sample = {
+            output: {
+              recipes: [
+                { title: 'Quick Garlic Butter Pasta', summary: '15-min pantry pasta', totalTime: 15, servings: 2, kcal: 520, tags: ['quick','pantry'], ingredients: [
+                  { qty: 200, unit: 'g', item: 'spaghetti'}, { qty: 3, unit: 'cloves', item: 'garlic', notes: 'minced'}, { qty: 2, unit: 'tbsp', item: 'butter'}, { qty: 1, unit: 'tbsp', item: 'olive oil'}, { qty: 0.25, unit: 'tsp', item: 'red pepper flakes', notes: 'optional'}, { qty: 0.5, unit: 'cup', item: 'pasta water'}],
+                  steps: [ { n:1, text:'Boil pasta until al dente.'}, { n:2, text:'Sauté garlic in butter and oil.'}, { n:3, text:'Toss pasta with garlic butter, loosen with pasta water.'} ]
+                },
+                { title: 'One-Pan Lemon Chicken', summary: 'Chicken with lemon and herbs', totalTime: 30, servings: 2, kcal: 620, tags: ['one-pan'], ingredients: [
+                  { qty: 2, unit: 'pieces', item: 'chicken breasts'}, { qty: 1, unit: 'pc', item: 'lemon', notes: 'zest and juice'}, { qty: 1, unit: 'tbsp', item: 'olive oil'}, { qty: 0.5, unit: 'tsp', item: 'salt'}],
+                  steps: [ { n:1, text:'Season chicken.'}, { n:2, text:'Sear and finish with lemon.'} ]
+                }
+              ]
+            }
+          };
+          const structured = prettyPrintRecipe(sample);
+          setPrettyRecipe(structured);
+          setRawRecipe(JSON.stringify(sample, null, 2));
+        } finally {
+          setLoading(false);
+          completeProgress();
+          scrollToResults();
+          abortRef.current = null;
+        }
+      }
+
+      function handleCancel() {
+        if (abortRef.current) {
+          try { abortRef.current.abort(); } catch {}
+        }
+        setLoading(false);
+        setError('Request cancelled.');
+        completeProgress();
+      }
+
+      function buildPrompt(base) {
+        const meta = [];
+        if (diet) meta.push(`diet: ${diet}`);
+        if (cuisine) meta.push(`cuisine: ${cuisine}`);
+        if (time) meta.push(`time: ${time} minutes`);
+        if (servings) meta.push(`servings: ${servings}`);
+        if ((exclude||'').trim()) meta.push(`exclude: ${(exclude||'').trim()}`);
+        return meta.length ? `${base} (${meta.join(', ')})` : base;
+      }
+      function quickSearch(term) {
+        setQuery(term);
+        setTimeout(() => {
+          const form = document.querySelector('form');
+          if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        }, 0);
+      }
+
+      async function handleCopy() {
+        try {
+          const toCopy = prettyRecipe ?
+            `${prettyRecipe.title}\n\nIngredients:\n- ${(prettyRecipe.ingredients || []).join('\n- ')}\n\nSteps:\n${(prettyRecipe.steps || []).map((s, i) => `${i+1}. ${s}`).join('\n')}`
+            : (rawRecipe || '');
+          await navigator.clipboard.writeText(toCopy);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1200);
+        } catch (_) {}
+      }
+
+      // Scroll to results helper
+      function scrollToResults() {
+        const results = document.querySelector('.result');
+        if (results) {
+          results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+
+      // Share, Save (Favorites), Print
+      const [favorites, setFavorites] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('favorites') || '[]'); } catch { return []; }
+      });
+      function handleSaveFavorite() {
+        const payload = prettyRecipe || { title: 'Recipe', raw: rawRecipe };
+        const key = `${payload.title || 'Recipe'}-${Date.now()}`;
+        const next = [{ key, recipe: payload }, ...favorites].slice(0, 20);
+        setFavorites(next);
+        try { localStorage.setItem('favorites', JSON.stringify(next)); } catch {}
+      }
+      async function handleShare() {
+        const shareText = (() => {
+          if (prettyRecipe) {
+            const ingredients = (prettyRecipe.ingredients || []).join('\n- ');
+            const steps = (prettyRecipe.steps || []).map((s, i) => `${i+1}. ${s}`).join('\n');
+            const metaBits = [];
+            if (prettyRecipe.meta?.time) metaBits.push(`Time: ${prettyRecipe.meta.time}`);
+            if (prettyRecipe.meta?.servings) metaBits.push(`Servings: ${prettyRecipe.meta.servings}`);
+            const meta = metaBits.length ? `\n${metaBits.join(' | ')}` : '';
+            return `${prettyRecipe.title}${meta}\n\nIngredients:\n- ${ingredients}\n\nSteps:\n${steps}`.trim();
+          }
+          return rawRecipe || query || 'Recipe';
+        })();
+        try {
+          if (navigator.share) {
+            await navigator.share({ title: prettyRecipe?.title || 'Recipe', text: shareText });
+          } else {
+            const wa = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+            window.open(wa, '_blank', 'noopener');
+          }
+        } catch {}
+      }
+      function handlePrint() { window.print(); }
+
+      // Determinate progress: reach 99% in ~20 seconds, then wait
+      function startProgress() {
+        clearInterval(progressTimerRef.current);
+        const start = Date.now();
+        progressTimerRef.current = setInterval(() => {
+          const elapsed = (Date.now() - start) / 1000; // seconds
+          const target = Math.min(99, Math.floor((elapsed / 20) * 99));
+          setProgressPct((prev) => (target > prev ? target : prev));
+        }, 200);
+      }
+
+      function completeProgress() {
+        clearInterval(progressTimerRef.current);
+        setProgressPct(100);
+        setTimeout(() => setProgressPct(0), 1200);
+      }
+
+      useEffect(() => {
+        const el = document.getElementById('det-bar');
+        if (el) { el.style.width = `${progressPct}%`; }
+      }, [progressPct]);
+
+      useEffect(() => () => {
+        try { clearInterval(progressTimerRef.current); } catch {}
+        try { abortRef.current?.abort(); } catch {}
+      }, []);
+
+      // Prefill from URL parameters
+      useEffect(() => {
+        const p = new URLSearchParams(location.search);
+        const q = p.get('q') || '';
+        const di = p.get('diet') || '';
+        const cu = p.get('cuisine') || '';
+        const ti = p.get('time') || '';
+        const se = p.get('servings') || '';
+        if (q) setQuery(q);
+        if (di) setDiet(di);
+        if (cu) setCuisine(cu);
+        if (ti) setTime(ti);
+        if (se) setServings(se);
+      }, []);
+
+      function onKeyDown(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+          handleSubmit(e);
+        }
+      }
+
+      // Handle popular clicks declaratively using React (no duplicate handlers)
+      function choosePopular(val) {
+        setQuery(val);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      // Wire up static Popular buttons to populate input
+      useEffect(() => {
+        const nodes = Array.from(document.querySelectorAll('[data-popular]'));
+        function onPopularClick(e) {
+          try {
+            const val = e.currentTarget?.getAttribute('data-popular') || '';
+            setQuery(val);
+            setTimeout(() => {
+              const form = document.querySelector('form');
+              if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+            }, 0);
+            const input = document.getElementById('main-input');
+            if (input) input.focus();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } catch {}
+        }
+        nodes.forEach((n) => n.addEventListener('click', onPopularClick));
+        return () => nodes.forEach((n) => n.removeEventListener('click', onPopularClick));
+      }, []);
+
+      // Featured gallery click -> show specific built-in recipe immediately
+      useEffect(() => {
+        const container = document.getElementById('featured-gallery');
+        if (!container) return;
+        // ensure fallbacks are wired
+        initGalleryImageFallbacks();
+        function onTileClick(e) {
+          const target = e.target.closest('[data-recipe]');
+          if (!target) return;
+          const key = target.getAttribute('data-recipe');
+          const recipe = BUILT_IN_RECIPES[key];
+          if (recipe) {
+            setRawRecipe(JSON.stringify({ output: { recipe } }, null, 2));
+            setPrettyRecipe(recipe);
+            try { setLastRecipe(recipe); } catch {}
+            setQuery(recipe.title);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(scrollToResults, 50);
+          }
+        }
+        container.addEventListener('click', onTileClick);
+        return () => container.removeEventListener('click', onTileClick);
+      }, []);
+
+      return (
+        <>
+          <label htmlFor="main-input" className="vis-label">Ingredients or dish</label>
+          <form onSubmit={handleSubmit} aria-busy={loading}>
+            <input
+              className="input"
+              placeholder="e.g. tomatoes, basil, mozzarella or 'pesto pasta'"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={onKeyDown}
+              aria-label="Ingredients or dish"
+              id="main-input"
+              aria-describedby="input-help"
+            />
+            <button className="button" disabled={loading} title="Ctrl/Cmd + Enter">
+              {loading ? 'Generating…' : 'Generate Recipe'}
+            </button>
+          </form>
+
+          <div className="help" id="input-help">Try a suggestion. Press Enter or click Generate.</div>
+          <div className="chips" aria-describedby="input-help">
+            {SUGGESTIONS.map((s) => (
+              <button key={s} type="button" className="chip" onClick={() => setQuery(s)}>{s}</button>
+            ))}
+          </div>
+
+          {loading && (
+            <>
+              <div className="wait-text appear" role="status" aria-live="polite">We are preparing your recipe, please wait <span className="dots"><span className="dot"></span><span className="dot"></span><span className="dot"></span></span></div>
+              <div className="progress appear"><div className="bar" /></div>
+              <div className="progress-determinate appear" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={progressPct}>
+                <div className="bar" id="det-bar" />
+              </div>
+              <div className="chef-anim appear" aria-hidden="true">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="g1" x1="0" x2="1">
+                      <stop offset="0%" stopColor="#fff3cd"/>
+                      <stop offset="100%" stopColor="#fde68a"/>
+                    </linearGradient>
+                  </defs>
+                  {/* pot */}
+                  <ellipse cx="120" cy="140" rx="40" ry="16" fill="#2b365a"/>
+                  <rect x="80" y="110" width="80" height="30" rx="10" fill="#32406d"/>
+                  <ellipse cx="120" cy="110" rx="40" ry="12" fill="#2f3a60"/>
+                  {/* steam */}
+                  <g className="steam" stroke="#ffffff" strokeWidth="2" fill="none">
+                    <path d="M110 90 C105 85, 105 80, 110 75"/>
+                    <path d="M120 85 C115 80, 115 75, 120 70"/>
+                    <path d="M130 90 C125 85, 125 80, 130 75"/>
+                  </g>
+                  {/* body */}
+                  <circle cx="80" cy="120" r="22" fill="#ffd7c2"/>
+                  <rect x="60" y="110" width="40" height="40" rx="12" fill="#ffb4a2"/>
+                  {/* face */}
+                  <circle cx="80" cy="95" r="18" fill="#ffe3d6" stroke="#f3c5b3"/>
+                  <circle cx="74" cy="92" r="2" fill="#2b2b2b"/>
+                  <circle cx="86" cy="92" r="2" fill="#2b2b2b"/>
+                  <path d="M74 100 Q80 104 86 100" stroke="#e47c73" strokeWidth="2" fill="none"/>
+                  {/* hat */}
+                  <rect x="64" y="74" width="32" height="8" rx="4" fill="#ffffff"/>
+                  <ellipse cx="80" cy="70" rx="18" ry="10" fill="#ffffff"/>
+                  {/* spoon */}
+                  <g className="chef-stir">
+                    <rect x="108" y="86" width="6" height="40" rx="3" fill="#9e6b42"/>
+                    <circle cx="111" cy="86" r="6" fill="#b98958"/>
+                  </g>
+                  {/* arm */}
+                  <rect x="90" y="104" width="20" height="8" rx="4" fill="#ffd7c2"/>
+                </svg>
+              </div>
+              <div style={{marginTop: 10}}>
+                <button type="button" className="icon-btn" onClick={handleCancel} aria-label="Cancel recipe generation">Cancel</button>
+              </div>
+            </>
+          )}
+
+          <div className="result" aria-live="polite">
+            {error && (
+              <div className="error appear">{error}</div>
+            )}
+
+            {loading && (
+              <div className="card appear">
+                <div className="skeleton" style={{height: 16, width: '60%', marginBottom: 10}}></div>
+                <div className="skeleton" style={{height: 12, width: '90%', marginBottom: 8}}></div>
+                <div className="skeleton" style={{height: 12, width: '85%', marginBottom: 8}}></div>
+                <div className="skeleton" style={{height: 12, width: '70%', marginBottom: 8}}></div>
+              </div>
+            )}
+
+            {!loading && (rawRecipe || prettyRecipe) && (
+              <div className="card appear" role="region" aria-live="polite">
+                <div className="card-header">
+                  <div className="card-title">Generated Recipe</div>
+                  <div className="card-actions">
+                    <button className="icon-btn" type="button" onClick={handleCopy} aria-label="Copy recipe">
+                      <span aria-hidden="true">📋</span> {copied ? 'Copied' : 'Copy'}
+                    </button>
+                    <button className="icon-btn" type="button" onClick={handleSaveFavorite} aria-label="Save to favorites" title="Save to favorites"><span aria-hidden="true">⭐</span> Save</button>
+                    <button className="icon-btn" type="button" onClick={handleShare} aria-label="Share recipe" title="Share recipe"><span aria-hidden="true">🔗</span> Share</button>
+                    <button className="icon-btn" type="button" onClick={handlePrint} aria-label="Print recipe" title="Print recipe"><span aria-hidden="true">🖨️</span> Print</button>
+                    {copied && <span className="copied-badge">✓</span>}
+                  </div>
+                </div>
+                {prettyRecipe ? (
+                  <div className="card-body">
+                    <div className="meta">
+                      {prettyRecipe.meta?.time && <span className="badge">⏱ {prettyRecipe.meta.time}</span>}
+                      {prettyRecipe.meta?.servings && <span className="badge">🍽 {prettyRecipe.meta.servings} servings</span>}
+                      {prettyRecipe.difficulty && <span className="badge">🎯 {prettyRecipe.difficulty}</span>}
+                      {typeof prettyRecipe.kcal === 'number' && <span className="badge">🔥 {prettyRecipe.kcal} kcal</span>}
+                    </div>
+                    {prettyRecipe.summary && <div style={{marginBottom:10, color:'#e7ebff'}}>{prettyRecipe.summary}</div>}
+                    {prettyRecipe.tags && prettyRecipe.tags.length > 0 && (
+                      <div className="chips" style={{margin:'4px 0 10px 0'}}>
+                        {prettyRecipe.tags.map((t, i) => (
+                          <span key={i} className="chip" style={{cursor:'default'}}>{t}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div style={{fontWeight: 700, marginBottom: 8}}>{prettyRecipe.title}</div>
+                    {Array.isArray(prettyRecipe.ingredients) && prettyRecipe.ingredients.length > 0 && (
+                      <div style={{marginBottom: 10}}>
+                        <div style={{fontWeight: 600, marginBottom: 6, color: '#caffe1'}}>Ingredients</div>
+                        <ul style={{margin: 0, paddingLeft: 18}}>
+                          {prettyRecipe.ingredients.map((ing, idx) => (
+                            <li key={idx}>{convertUnits(ing, unit)}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {Array.isArray(prettyRecipe.steps) && prettyRecipe.steps.length > 0 && (
+                      <div>
+                        <div style={{fontWeight: 600, marginBottom: 6, color: '#caffe1'}}>Steps</div>
+                        <ol style={{margin: 0, paddingLeft: 18}}>
+                          {prettyRecipe.steps.map((st, idx) => (
+                            <li key={idx} style={{marginBottom: 6}}>{st}</li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                    {prettyRecipe.macros && (
+                      <div className="chips" style={{marginTop:10}}>
+                        {'protein' in prettyRecipe.macros && <span className="chip" style={{cursor:'default'}}>Protein: {prettyRecipe.macros.protein} g</span>}
+                        {'carbs' in prettyRecipe.macros && <span className="chip" style={{cursor:'default'}}>Carbs: {prettyRecipe.macros.carbs} g</span>}
+                        {'fat' in prettyRecipe.macros && <span className="chip" style={{cursor:'default'}}>Fat: {prettyRecipe.macros.fat} g</span>}
+                      </div>
+                    )}
+                    {prettyRecipe.tips && prettyRecipe.tips.length > 0 && (
+                      <div style={{marginTop:12}}>
+                        <div style={{fontWeight: 600, marginBottom: 6, color: '#caffe1'}}>Tips</div>
+                        <ul style={{margin: 0, paddingLeft: 18}}>
+                          {prettyRecipe.tips.map((tip, idx) => <li key={idx}>{tip}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {prettyRecipe.substitutions && prettyRecipe.substitutions.length > 0 && (
+                      <div style={{marginTop:12}}>
+                        <div style={{fontWeight: 600, marginBottom: 6, color: '#caffe1'}}>Substitutions</div>
+                        <ul style={{margin: 0, paddingLeft: 18}}>
+                          {prettyRecipe.substitutions.map((s, idx) => <li key={idx}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {prettyRecipe.allergens && prettyRecipe.allergens.length > 0 && (
+                      <div style={{marginTop:12}}>
+                        <div style={{fontWeight: 600, marginBottom: 6, color: '#caffe1'}}>Allergens</div>
+                        <ul style={{margin: 0, paddingLeft: 18}}>
+                          {prettyRecipe.allergens.map((a, idx) => <li key={idx}>{a}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {prettyRecipe.notice && (
+                      <div className="error" style={{marginTop:12, background:'rgba(255,193,7,0.08)', borderColor:'rgba(255,193,7,0.35)', color:'#fff3cd'}}>{prettyRecipe.notice}</div>
+                    )}
+                    {/* Related recipes */}
+                    <div style={{marginTop:12}}>
+                      <div style={{fontWeight: 600, marginBottom: 6, color: '#caffe1'}}>More like this</div>
+                      <div className="chips">
+                        {[ 'butter chicken','pesto pasta','veg biryani','vegan bowl','lemon chicken','garlic butter pasta' ]
+                          .filter((t) => (prettyRecipe.title||'').toLowerCase() !== t)
+                          .slice(0,6)
+                          .map((t) => (
+                            <button key={t} type="button" className="chip" onClick={() => quickSearch(t)} aria-label={`Search ${t}`}>{t}</button>
+                          ))}
+                      </div>
+                    </div>
+                  </div>
+                 ) : (
+                   <div className="card-body">
+                     <div style={{marginBottom:8}}>Couldn’t structure the response. Showing raw text:</div>
+                     <pre style={{whiteSpace:'pre-wrap', margin:0}}>{rawRecipe}</pre>
+                     <details style={{marginTop:8}}>
+                       <summary>Show raw JSON (debug)</summary>
+                       <pre style={{whiteSpace:'pre-wrap'}}>{(() => { try { return JSON.stringify(JSON.parse(rawRecipe), null, 2); } catch { return rawRecipe; } })()}</pre>
+                     </details>
+                   </div>
+                 )}
+              </div>
+            )}
+
+            {!loading && (recent.length > 0 || favorites.length > 0) && (
+              <div className="card appear">
+                <div className="card-header">
+                  <div className="card-title">Recent & Favorites</div>
+                </div>
+                {recent.length > 0 && (
+                  <div className="chips">
+                    {recent.map((r) => (
+                      <button key={r} type="button" className="chip" onClick={() => {
+                        setQuery(r);
+                        setTimeout(() => {
+                          const form = document.querySelector('form');
+                          if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                        }, 0);
+                      }}>{r}</button>
+                    ))}
+                  </div>
+                )}
+                {favorites.length > 0 && (
+                  <div className="chips" style={{marginTop:8}}>
+                    {favorites.map((f) => (
+                      <button key={f.key} type="button" className="chip" onClick={() => {
+                        const title = f.recipe?.title || 'Recipe';
+                        setQuery(title);
+                        setTimeout(() => {
+                          const form = document.querySelector('form');
+                          if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+                        }, 0);
+                      }}>{f.recipe?.title || 'Recipe'}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    function AppRoot() {
+      // Lift state to allow Filters to access it
+      const [diet, setDiet] = React.useState('');
+      const [cuisine, setCuisine] = React.useState('');
+      const [time, setTime] = React.useState('');
+      const [servings, setServings] = React.useState('2');
+      const [unit, setUnit] = React.useState('metric');
+      const [exclude, setExclude] = React.useState('');
+      const [lastRecipe, setLastRecipe] = React.useState(null);
+      // Observe recipe updates via a simple event bus pattern if needed.
+      // Here we pass a setter down so RecipeApp can update JSON-LD state when it renders content.
+      return (
+        <>
+          <RecipeApp
+            diet={diet} setDiet={setDiet}
+            cuisine={cuisine} setCuisine={setCuisine}
+            time={time} setTime={setTime}
+            servings={servings} setServings={setServings}
+            unit={unit}
+            exclude={exclude}
+            setLastRecipe={setLastRecipe}
+          />
+          {ReactDOM.createPortal(
+            <Filters
+              diet={diet} setDiet={setDiet}
+              cuisine={cuisine} setCuisine={setCuisine}
+              time={time} setTime={setTime}
+              servings={servings} setServings={setServings}
+              unit={unit} setUnit={setUnit}
+              exclude={exclude} setExclude={setExclude}
+            />, document.getElementById('filters-root')
+          )}
+          <JsonLd recipe={lastRecipe} />
+        </>
+      );
+    }
+    // JSON-LD injection when recipe exists
+    function JsonLd({ recipe }) {
+      if (!recipe) return null;
+      const data = {
+        '@context': 'https://schema.org/',
+        '@type': 'Recipe',
+        name: recipe.title,
+        recipeIngredient: recipe.ingredients || [],
+        recipeInstructions: (recipe.steps || []).map((s) => ({ '@type': 'HowToStep', text: s })),
+        totalTime: recipe.meta?.time || undefined,
+        recipeYield: recipe.meta?.servings ? `${recipe.meta.servings} servings` : undefined
+      };
+      return (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+        />
+      );
+    }
+
+    root.render(<AppRoot />);
+  </script>
+</body>
+</html>
+
+
